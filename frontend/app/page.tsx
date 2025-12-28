@@ -18,9 +18,20 @@ export default function Home() {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const lastMessageIdRef = useRef<string | null>(null)
   const isInitialLoad = useRef(true)
+  const shouldAutoScroll = useRef(true)
 
   const scrollToBottom = (instant = false) => {
-    if (messagesEndRef.current) {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      if (instant) {
+        container.scrollTop = container.scrollHeight
+      } else {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+    } else if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ 
         behavior: instant ? 'auto' : 'smooth',
         block: 'end'
@@ -28,16 +39,26 @@ export default function Home() {
     }
   }
 
+  // Check if user is near bottom (within 100px)
+  const isNearBottom = () => {
+    if (!messagesContainerRef.current) return true
+    const container = messagesContainerRef.current
+    const threshold = 100
+    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+  }
+
   // Scroll to bottom on initial load and when messages change
   useEffect(() => {
     if (messages.length > 0) {
       if (isInitialLoad.current) {
         // Instant scroll on initial load
-        setTimeout(() => scrollToBottom(true), 100)
-        isInitialLoad.current = false
-      } else {
-        // Smooth scroll for new messages
-        scrollToBottom()
+        setTimeout(() => {
+          scrollToBottom(true)
+          isInitialLoad.current = false
+        }, 100)
+      } else if (shouldAutoScroll.current || isNearBottom()) {
+        // Auto-scroll if user is near bottom or should auto-scroll
+        setTimeout(() => scrollToBottom(), 50)
       }
     }
   }, [messages])
@@ -55,9 +76,11 @@ export default function Home() {
       const data = await response.json()
       
       // Check if there are new messages
-      if (data.length > 0 && data[data.length - 1].id !== lastMessageIdRef.current) {
+      const lastMessageId = data.length > 0 ? data[data.length - 1].id : null
+      if (lastMessageId && lastMessageId !== lastMessageIdRef.current) {
         setMessages(data)
-        lastMessageIdRef.current = data[data.length - 1].id
+        lastMessageIdRef.current = lastMessageId
+        shouldAutoScroll.current = true
       } else if (data.length > 0) {
         // Only update if messages changed (for silent updates)
         setMessages(data)
@@ -91,6 +114,7 @@ export default function Home() {
     }
 
     setIsSending(true)
+    shouldAutoScroll.current = true
     const tempId = `temp-${Date.now()}`
     const optimisticMessage: Message = {
       id: tempId,
@@ -101,7 +125,9 @@ export default function Home() {
 
     // Optimistic update: add message immediately
     setMessages((prev) => [...prev, optimisticMessage])
-    scrollToBottom(true)
+    
+    // Scroll immediately after adding optimistic message
+    setTimeout(() => scrollToBottom(true), 50)
 
     try {
       const response = await fetch(`${API_URL}/api/messages`, {
@@ -121,6 +147,9 @@ export default function Home() {
         prev.map((msg) => msg.id === tempId ? newMessage : msg)
       )
       lastMessageIdRef.current = newMessage.id
+      
+      // Scroll after message is confirmed
+      setTimeout(() => scrollToBottom(), 100)
     } catch (err) {
       // Remove optimistic message on error
       setMessages((prev) => prev.filter((msg) => msg.id !== tempId))
@@ -130,6 +159,19 @@ export default function Home() {
       setIsSending(false)
     }
   }
+
+  // Track scroll position to determine if we should auto-scroll
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      shouldAutoScroll.current = isNearBottom()
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
     <main className={styles.main}>
@@ -173,3 +215,4 @@ export default function Home() {
     </main>
   )
 }
+

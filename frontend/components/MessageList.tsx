@@ -14,6 +14,7 @@ export function MessageList({ messages, currentUsername, containerRef }: Message
   const [visibleMessages, setVisibleMessages] = useState<Set<string>>(new Set())
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const hasScrolledToBottom = useRef(false)
+  const prevMessagesLength = useRef(0)
 
   useEffect(() => {
     // Animate new messages as they appear
@@ -26,15 +27,23 @@ export function MessageList({ messages, currentUsername, containerRef }: Message
     })
   }, [messages, visibleMessages])
 
-  // Scroll to bottom on initial load
+  // Scroll to bottom on initial load and when new messages are added
   useEffect(() => {
-    if (messages.length > 0 && !hasScrolledToBottom.current && containerRef?.current) {
-      setTimeout(() => {
-        if (containerRef.current) {
-          containerRef.current.scrollTop = containerRef.current.scrollHeight
-          hasScrolledToBottom.current = true
-        }
-      }, 200)
+    if (messages.length > 0 && containerRef?.current) {
+      const container = containerRef.current
+      const isNewMessage = messages.length > prevMessagesLength.current
+      
+      if (!hasScrolledToBottom.current || isNewMessage) {
+        // Use requestAnimationFrame for smooth scrolling
+        requestAnimationFrame(() => {
+          if (container) {
+            container.scrollTop = container.scrollHeight
+            hasScrolledToBottom.current = true
+          }
+        })
+      }
+      
+      prevMessagesLength.current = messages.length
     }
   }, [messages, containerRef])
 
