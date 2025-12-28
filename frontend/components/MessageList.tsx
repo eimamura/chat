@@ -13,6 +13,7 @@ interface MessageListProps {
 export function MessageList({ messages, currentUsername, containerRef }: MessageListProps) {
   const [visibleMessages, setVisibleMessages] = useState<Set<string>>(new Set())
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const hasScrolledToBottom = useRef(false)
 
   useEffect(() => {
     // Animate new messages as they appear
@@ -24,6 +25,18 @@ export function MessageList({ messages, currentUsername, containerRef }: Message
       }
     })
   }, [messages, visibleMessages])
+
+  // Scroll to bottom on initial load
+  useEffect(() => {
+    if (messages.length > 0 && !hasScrolledToBottom.current && containerRef?.current) {
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollTop = containerRef.current.scrollHeight
+          hasScrolledToBottom.current = true
+        }
+      }, 200)
+    }
+  }, [messages, containerRef])
 
   if (messages.length === 0) {
     return (
