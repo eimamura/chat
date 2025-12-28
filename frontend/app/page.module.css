@@ -58,6 +58,17 @@
   background: #1a1a2e;
 }
 
+.usernameRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.usernameInputGroup {
+  flex: 1;
+}
+
 .usernameLabel {
   display: block;
   font-size: 0.85rem;
@@ -85,6 +96,114 @@
 
 .usernameInput::placeholder {
   color: #6b7280;
+}
+
+.deleteAllButton {
+  padding: 8px 16px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+.deleteAllButton:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.deleteAllButton:active {
+  transform: translateY(0);
+}
+
+.deleteConfirmOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.deleteConfirmDialog {
+  background: #1a1a2e;
+  border: 1px solid #2d2d44;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.deleteConfirmDialog h3 {
+  margin: 0 0 12px 0;
+  color: #ececf1;
+  font-size: 1.2rem;
+}
+
+.deleteConfirmDialog p {
+  margin: 0 0 20px 0;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.deleteConfirmButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancelButton {
+  padding: 10px 20px;
+  background: #2d2d44;
+  color: #ececf1;
+  border: 1px solid #3d3d5c;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: #3d3d5c;
+  border-color: #4d4d6c;
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirmDeleteButton {
+  padding: 10px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirmDeleteButton:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.confirmDeleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .loading {

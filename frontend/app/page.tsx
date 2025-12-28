@@ -14,6 +14,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [username, setUsername] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const lastMessageIdRef = useRef<string | null>(null)
@@ -88,6 +90,10 @@ export default function Home() {
       } else if (data.length > 0) {
         // Only update if messages changed (for silent updates)
         setMessages(data)
+      } else {
+        // No messages
+        setMessages([])
+        lastMessageIdRef.current = null
       }
     } catch (err) {
       if (!silent) {
@@ -164,6 +170,27 @@ export default function Home() {
     }
   }
 
+  const handleDeleteAll = async () => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`${API_URL}/api/messages`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to delete all messages')
+      }
+      setMessages([])
+      lastMessageIdRef.current = null
+      setShowDeleteConfirm(false)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete all messages')
+      console.error('Error deleting all messages:', err)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   // Handle Enter key in username input to focus message field
   const handleUsernameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && username.trim()) {
@@ -219,20 +246,58 @@ export default function Home() {
         )}
 
         <div className={styles.usernameSection}>
-          <label htmlFor="username" className={styles.usernameLabel}>
-            Your Username:
-          </label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            onKeyDown={handleUsernameKeyDown}
-            placeholder="Enter your username..."
-            className={styles.usernameInput}
-            maxLength={50}
-          />
+          <div className={styles.usernameRow}>
+            <div className={styles.usernameInputGroup}>
+              <label htmlFor="username" className={styles.usernameLabel}>
+                Your Username:
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={handleUsernameKeyDown}
+                placeholder="Enter your username..."
+                className={styles.usernameInput}
+                maxLength={50}
+              />
+            </div>
+            {messages.length > 0 && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className={styles.deleteAllButton}
+                title="Delete all messages"
+              >
+                🗑️ Delete All
+              </button>
+            )}
+          </div>
         </div>
+
+        {showDeleteConfirm && (
+          <div className={styles.deleteConfirmOverlay}>
+            <div className={styles.deleteConfirmDialog}>
+              <h3>Delete All Messages?</h3>
+              <p>This will permanently delete all {messages.length} messages. This action cannot be undone.</p>
+              <div className={styles.deleteConfirmButtons}>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className={styles.cancelButton}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAll}
+                  className={styles.confirmDeleteButton}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete All'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading && messages.length === 0 ? (
           <div className={styles.loading}>Loading messages...</div>

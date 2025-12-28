@@ -68,4 +68,10 @@ class MessageService:
         self.db.delete(db_message)
         self.db.commit()
         return True
-
+    
+    def delete_all(self) -> int:
+        """Delete all messages. Returns the number of deleted messages."""
+        count = self.db.query(DBMessage).count()
+        self.db.query(DBMessage).delete()
+        self.db.commit()
+        return count

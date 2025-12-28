@@ -127,3 +127,21 @@ async def delete_message(message_id: UUID, db: Session = Depends(get_db)):
             detail="Failed to delete message"
         )
 
+
+@router.delete("/messages", status_code=status.HTTP_200_OK)
+async def delete_all_messages(db: Session = Depends(get_db)):
+    """
+    Delete all messages.
+    """
+    try:
+        logger.info("Deleting all messages")
+        service = MessageService(db)
+        count = service.delete_all()
+        logger.info(f"Deleted {count} messages")
+        return {"deleted_count": count}
+    except Exception as e:
+        logger.error(f"Error deleting all messages: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete all messages"
+        )
