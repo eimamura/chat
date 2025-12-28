@@ -18,7 +18,8 @@ export default function Home() {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const lastMessageIdRef = useRef<string | null>(null)
   const isInitialLoad = useRef(true)
-  const shouldAutoScroll = useRef(true)
+  const userScrolledUp = useRef(false)
+  const isUserScrolling = useRef(false)
 
   const scrollToBottom = (instant = false) => {
     if (messagesContainerRef.current) {
@@ -39,29 +40,26 @@ export default function Home() {
     }
   }
 
-  // Check if user is near bottom (within 100px)
+  // Check if user is near bottom (within 150px)
   const isNearBottom = () => {
     if (!messagesContainerRef.current) return true
     const container = messagesContainerRef.current
-    const threshold = 100
-    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+    const threshold = 150
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    return distanceFromBottom < threshold
   }
 
-  // Scroll to bottom on initial load and when messages change
+  // Scroll to bottom only on initial load
   useEffect(() => {
-    if (messages.length > 0) {
-      if (isInitialLoad.current) {
-        // Instant scroll on initial load
-        setTimeout(() => {
-          scrollToBottom(true)
-          isInitialLoad.current = false
-        }, 100)
-      } else if (shouldAutoScroll.current || isNearBottom()) {
-        // Auto-scroll if user is near bottom or should auto-scroll
-        setTimeout(() => scrollToBottom(), 50)
-      }
+    if (messages.length > 0 && isInitialLoad.current) {
+      // Instant scroll on initial load only
+      setTimeout(() => {
+        scrollToBottom(true)
+        isInitialLoad.current = false
+        userScrolledUp.current = false
+      }, 100)
     }
-  }, [messages])
+  }, [messages.length === 0 ? null : messages]) // Only trigger on initial load
 
   const fetchMessages = async (silent = false) => {
     try {
@@ -78,9 +76,14 @@ export default function Home() {
       // Check if there are new messages
       const lastMessageId = data.length > 0 ? data[data.length - 1].id : null
       if (lastMessageId && lastMessageId !== lastMessageIdRef.current) {
+        // New message received
         setMessages(data)
         lastMessageIdRef.current = lastMessageId
-        shouldAutoScroll.current = true
+        
+        // Only auto-scroll if user is near bottom (not scrolled up)
+        if (isNearBottom() && !userScrolledUp.current) {
+          setTimeout(() => scrollToBottom(), 100)
+        }
       } else if (data.length > 0) {
         // Only update if messages changed (for silent updates)
         setMessages(data)
@@ -114,7 +117,7 @@ export default function Home() {
     }
 
     setIsSending(true)
-    shouldAutoScroll.current = true
+    userScrolledUp.current = false // Reset when user sends message
     const tempId = `temp-${Date.now()}`
     const optimisticMessage: Message = {
       id: tempId,
@@ -126,7 +129,7 @@ export default function Home() {
     // Optimistic update: add message immediately
     setMessages((prev) => [...prev, optimisticMessage])
     
-    // Scroll immediately after adding optimistic message
+    // Always scroll when user sends a message
     setTimeout(() => scrollToBottom(true), 50)
 
     try {
@@ -160,17 +163,39 @@ export default function Home() {
     }
   }
 
-  // Track scroll position to determine if we should auto-scroll
+  // Track scroll position to determine if user scrolled up
   useEffect(() => {
     const container = messagesContainerRef.current
     if (!container) return
 
+    let scrollTimeout: NodeJS.Timeout
+
     const handleScroll = () => {
-      shouldAutoScroll.current = isNearBottom()
+      // Clear previous timeout
+      clearTimeout(scrollTimeout)
+      
+      // Mark that user is scrolling
+      isUserScrolling.current = true
+      
+      // Check if user scrolled up (away from bottom)
+      if (!isNearBottom()) {
+        userScrolledUp.current = true
+      } else {
+        // User scrolled back to bottom
+        userScrolledUp.current = false
+      }
+
+      // Reset scrolling flag after scroll ends
+      scrollTimeout = setTimeout(() => {
+        isUserScrolling.current = false
+      }, 150)
     }
 
-    container.addEventListener('scroll', handleScroll)
-    return () => container.removeEventListener('scroll', handleScroll)
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+      clearTimeout(scrollTimeout)
+    }
   }, [])
 
   return (
@@ -215,4 +240,3 @@ export default function Home() {
     </main>
   )
 }
-
