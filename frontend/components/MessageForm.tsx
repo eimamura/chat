@@ -6,13 +6,13 @@ import styles from './MessageForm.module.css'
 interface MessageFormProps {
   onSend: (content: string) => void
   disabled?: boolean
+  focusTrigger?: number // Trigger focus when this value changes
 }
 
-export function MessageForm({ onSend, disabled }: MessageFormProps) {
+export function MessageForm({ onSend, disabled, focusTrigger }: MessageFormProps) {
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const hasFocusedOnMount = useRef(false)
 
   // Auto-resize textarea
   useEffect(() => {
@@ -22,26 +22,14 @@ export function MessageForm({ onSend, disabled }: MessageFormProps) {
     }
   }, [content])
 
-  // Focus on mount when not disabled
+  // Focus when focusTrigger changes (e.g., when user presses Enter in username field)
   useEffect(() => {
-    if (!disabled && !hasFocusedOnMount.current && textareaRef.current) {
-      // Small delay to ensure the component is fully rendered
-      setTimeout(() => {
-        textareaRef.current?.focus()
-        hasFocusedOnMount.current = true
-      }, 100)
-    }
-  }, [disabled])
-
-  // Focus when disabled becomes false (username entered)
-  useEffect(() => {
-    if (!disabled && textareaRef.current) {
-      // Focus when username is entered
+    if (focusTrigger && focusTrigger > 0 && !disabled && textareaRef.current) {
       setTimeout(() => {
         textareaRef.current?.focus()
       }, 50)
     }
-  }, [disabled])
+  }, [focusTrigger, disabled])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

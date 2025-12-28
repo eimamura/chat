@@ -20,6 +20,7 @@ export default function Home() {
   const isInitialLoad = useRef(true)
   const userScrolledUp = useRef(false)
   const isUserScrolling = useRef(false)
+  const messageFocusTrigger = useRef(0)
 
   const scrollToBottom = (instant = false) => {
     if (messagesContainerRef.current) {
@@ -163,6 +164,15 @@ export default function Home() {
     }
   }
 
+  // Handle Enter key in username input to focus message field
+  const handleUsernameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && username.trim()) {
+      e.preventDefault()
+      // Trigger focus on message input
+      messageFocusTrigger.current += 1
+    }
+  }
+
   // Track scroll position to determine if user scrolled up
   useEffect(() => {
     const container = messagesContainerRef.current
@@ -217,6 +227,7 @@ export default function Home() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={handleUsernameKeyDown}
             placeholder="Enter your username..."
             className={styles.usernameInput}
             maxLength={50}
@@ -235,7 +246,11 @@ export default function Home() {
 
         <div ref={messagesEndRef} />
 
-        <MessageForm onSend={handleSend} disabled={!username.trim() || isSending} />
+        <MessageForm 
+          onSend={handleSend} 
+          disabled={!username.trim() || isSending}
+          focusTrigger={messageFocusTrigger.current}
+        />
       </div>
     </main>
   )
