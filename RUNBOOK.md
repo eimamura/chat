@@ -8,9 +8,36 @@ Common failures and fixes for the MVP Web App.
 
 **Symptoms**: Error about port 5432, 8000, or 3000 already in use.
 
+**Common causes**:
+- Another Docker container is using the port (e.g., `dataops-postgres` using 5432)
+- A local service is running on the port (e.g., local PostgreSQL installation)
+
 **Fix**:
-1. Check what's using the port: `lsof -i :8000` (or `netstat -tulpn | grep :8000`)
-2. Either stop the conflicting service or change the port in `.env`
+1. Check what's using the port:
+   ```bash
+   # Check Docker containers
+   docker ps | grep <port>
+   
+   # Check system processes
+   lsof -i :<port>  # or `netstat -tulpn | grep :<port>`
+   ```
+
+2. **Option A: Change port in `.env`** (Recommended if you have other services):
+   ```bash
+   # Edit .env file
+   POSTGRES_PORT=5433  # Use a different port
+   BACKEND_PORT=8001   # If 8000 is also in use
+   FRONTEND_PORT=3001   # If 3000 is also in use
+   ```
+
+3. **Option B: Stop conflicting Docker container** (if safe to do so):
+   ```bash
+   docker stop <container-name>
+   ```
+
+**Example**: If `dataops-postgres` is using port 5432:
+- Change `POSTGRES_PORT=5433` in `.env` (recommended)
+- Or stop it: `docker stop dataops-postgres` (only if you don't need it)
 
 ### Issue: Docker Compose version
 
