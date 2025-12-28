@@ -3,9 +3,23 @@ Tests for item endpoints.
 """
 from uuid import uuid4
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from main import app
-from app.services.item_service import ItemService
+from app.database import get_db, Base, engine
+from app.models.db_item import DBItem
 
+# Create test database
+Base.metadata.create_all(bind=engine)
+
+def override_get_db():
+    """Override database dependency for testing."""
+    db = Session(bind=engine)
+    try:
+        yield db
+    finally:
+        db.close()
+
+app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 
