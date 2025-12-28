@@ -15,14 +15,31 @@ export default function Home() {
   const [username, setUsername] = useState('')
   const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const lastMessageIdRef = useRef<string | null>(null)
+  const isInitialLoad = useRef(true)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToBottom = (instant = false) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: instant ? 'auto' : 'smooth',
+        block: 'end'
+      })
+    }
   }
 
+  // Scroll to bottom on initial load and when messages change
   useEffect(() => {
-    scrollToBottom()
+    if (messages.length > 0) {
+      if (isInitialLoad.current) {
+        // Instant scroll on initial load
+        setTimeout(() => scrollToBottom(true), 100)
+        isInitialLoad.current = false
+      } else {
+        // Smooth scroll for new messages
+        scrollToBottom()
+      }
+    }
   }, [messages])
 
   const fetchMessages = async (silent = false) => {
@@ -84,7 +101,7 @@ export default function Home() {
 
     // Optimistic update: add message immediately
     setMessages((prev) => [...prev, optimisticMessage])
-    scrollToBottom()
+    scrollToBottom(true)
 
     try {
       const response = await fetch(`${API_URL}/api/messages`, {
@@ -117,11 +134,6 @@ export default function Home() {
   return (
     <main className={styles.main}>
       <div className={styles.container}>
-        <h1 className={styles.title}>Chat MVP</h1>
-        <p className={styles.description}>
-          A simple chat application demonstrating end-to-end flow
-        </p>
-
         {error && (
           <div className={styles.error}>
             Error: {error}
@@ -147,7 +159,11 @@ export default function Home() {
         {loading && messages.length === 0 ? (
           <div className={styles.loading}>Loading messages...</div>
         ) : (
-          <MessageList messages={messages} currentUsername={username} />
+          <MessageList 
+            messages={messages} 
+            currentUsername={username}
+            containerRef={messagesContainerRef}
+          />
         )}
 
         <div ref={messagesEndRef} />

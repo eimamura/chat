@@ -7,9 +7,10 @@ import styles from './MessageList.module.css'
 interface MessageListProps {
   messages: Message[]
   currentUsername?: string
+  containerRef?: React.RefObject<HTMLDivElement>
 }
 
-export function MessageList({ messages, currentUsername }: MessageListProps) {
+export function MessageList({ messages, currentUsername, containerRef }: MessageListProps) {
   const [visibleMessages, setVisibleMessages] = useState<Set<string>>(new Set())
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
@@ -33,7 +34,7 @@ export function MessageList({ messages, currentUsername }: MessageListProps) {
   }
 
   return (
-    <div className={styles.messagesContainer}>
+    <div className={styles.messagesContainer} ref={containerRef}>
       <div className={styles.messages}>
         {messages.map((message, index) => {
           const isOwnMessage = currentUsername && message.username === currentUsername
