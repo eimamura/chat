@@ -1,6 +1,6 @@
-# MVP Web App
+# Chat MVP
 
-A minimal but complete MVP demonstrating an end-to-end flow: UI → API → DB → UI.
+A minimal but complete chat application demonstrating an end-to-end flow: UI → API → DB → UI.
 
 ## Tech Stack
 
@@ -40,9 +40,11 @@ docker compose up
 ```
 
 This will start:
-- PostgreSQL on port 5432
+- PostgreSQL on port 5433 (configurable via `POSTGRES_PORT` in `.env`)
 - Backend API on port 8000
 - Frontend on port 3000
+
+**Note**: If port 5432 is already in use (e.g., by another PostgreSQL instance), the default port is set to 5433. You can change this in `.env` if needed.
 
 Access:
 - Frontend: http://localhost:3000
@@ -119,7 +121,7 @@ If you need to reset just the database without removing volumes:
 docker compose exec postgres psql -U appuser -d appdb
 
 # In psql, drop and recreate:
-# DROP TABLE items;
+# DROP TABLE messages;
 # \q
 
 # Then run migrations
@@ -144,19 +146,21 @@ Run the demo script to verify end-to-end functionality:
 1. Start services: `docker compose up`
 2. Wait for all services to be healthy (check logs: `docker compose logs`)
 3. Open http://localhost:3000 in your browser
-4. You should see a list of items (seed data - 5 items)
-5. Create a new item using the form at the top
-6. Verify the new item appears in the list
-7. Delete an item using the delete button
-8. Refresh the page to verify changes persist
+4. You should see sample chat messages (seed data - 5 messages)
+5. Enter your username in the input field at the top
+6. Type a message and click "Send"
+7. Your message should appear in the chat
+8. Messages auto-refresh every 3 seconds to show new messages from other users
 
 ## API Endpoints
 
 - `GET /healthz` - Health check
-- `GET /api/items` - List all items
-- `POST /api/items` - Create a new item
-- `GET /api/items/{id}` - Get a specific item
-- `DELETE /api/items/{id}` - Delete an item
+- `GET /api/messages` - List all messages (ordered chronologically)
+  - Query params: `limit` (optional, 1-100) - Limit number of messages
+- `POST /api/messages` - Create a new message
+  - Body: `{ "username": "string", "content": "string" }`
+- `GET /api/messages/{id}` - Get a specific message
+- `DELETE /api/messages/{id}` - Delete a message
 
 Full API documentation available at `/docs` (OpenAPI/Swagger UI).
 

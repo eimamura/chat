@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
 
-from app.routers import health, items
+from app.routers import health, messages
 from app.database import engine, Base
 
 # Configure logging
@@ -17,8 +17,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="MVP API",
-    description="Minimal MVP API for Item CRUD operations",
+    title="Chat MVP API",
+    description="Minimal MVP API for chat messaging",
     version="0.1.0",
 )
 
@@ -33,7 +33,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router, tags=["health"])
-app.include_router(items.router, prefix="/api", tags=["items"])
+app.include_router(messages.router, prefix="/api", tags=["messages"])
 
 
 @app.on_event("startup")
