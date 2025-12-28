@@ -76,14 +76,23 @@ pnpm test
 Backend:
 ```bash
 cd backend
+# Format code
 black .
+
+# Lint code
 flake8 .
+
+# Run tests
+pytest
 ```
 
 Frontend:
 ```bash
 cd frontend
+# Lint code
 pnpm lint
+
+# Format code
 pnpm format
 ```
 
@@ -101,15 +110,45 @@ This will:
 - Remove the PostgreSQL volume (all data will be lost)
 - Start fresh with migrations and seed data
 
+### Manual Database Reset
+
+If you need to reset just the database without removing volumes:
+
+```bash
+# Connect to database
+docker compose exec postgres psql -U appuser -d appdb
+
+# In psql, drop and recreate:
+# DROP TABLE items;
+# \q
+
+# Then run migrations
+docker compose exec backend alembic upgrade head
+
+# Seed data
+docker compose exec backend python scripts/seed.py
+```
+
 ## Demo Steps
 
+### Quick Demo (Automated)
+
+Run the demo script to verify end-to-end functionality:
+
+```bash
+./scripts/demo.sh
+```
+
+### Manual Demo
+
 1. Start services: `docker compose up`
-2. Wait for all services to be healthy
-3. Open http://localhost:3000
-4. You should see a list of items (seed data)
-5. Create a new item using the form
-6. Delete an item using the delete button
-7. Verify changes persist after refresh
+2. Wait for all services to be healthy (check logs: `docker compose logs`)
+3. Open http://localhost:3000 in your browser
+4. You should see a list of items (seed data - 5 items)
+5. Create a new item using the form at the top
+6. Verify the new item appears in the list
+7. Delete an item using the delete button
+8. Refresh the page to verify changes persist
 
 ## API Endpoints
 

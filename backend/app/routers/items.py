@@ -38,9 +38,10 @@ async def create_item(item: ItemCreate, db: Session = Depends(get_db)):
     Create a new item.
     """
     try:
+        logger.info(f"Creating item with name: {item.name}")
         service = ItemService(db)
         new_item = service.create(item.name)
-        logger.info(f"Created item: {new_item.id}")
+        logger.info(f"Created item: id={new_item.id}, name={new_item.name}")
         return ItemResponse(id=new_item.id, name=new_item.name, created_at=new_item.created_at)
     except Exception as e:
         logger.error(f"Error creating item: {e}", exc_info=True)
@@ -56,13 +57,16 @@ async def get_item(item_id: UUID, db: Session = Depends(get_db)):
     Get a specific item by ID.
     """
     try:
+        logger.info(f"Getting item: {item_id}")
         service = ItemService(db)
         item = service.get_by_id(item_id)
         if not item:
+            logger.warning(f"Item not found: {item_id}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Item with id {item_id} not found"
             )
+        logger.info(f"Found item: id={item.id}, name={item.name}")
         return ItemResponse(id=item.id, name=item.name, created_at=item.created_at)
     except HTTPException:
         raise
@@ -80,9 +84,11 @@ async def delete_item(item_id: UUID, db: Session = Depends(get_db)):
     Delete an item by ID.
     """
     try:
+        logger.info(f"Deleting item: {item_id}")
         service = ItemService(db)
         deleted = service.delete(item_id)
         if not deleted:
+            logger.warning(f"Item not found for deletion: {item_id}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Item with id {item_id} not found"
